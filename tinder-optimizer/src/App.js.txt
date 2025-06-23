@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Camera, Upload, User, BarChart3, Target, Star, CheckCircle, AlertCircle, TrendingUp, Heart, MessageCircle, Eye, Zap, Award } from 'lucide-react';
 
 const TinderProfileOptimizer = () => {
   const [currentScreen, setCurrentScreen] = useState('home');
@@ -7,16 +6,11 @@ const TinderProfileOptimizer = () => {
     bio: '',
     age: '',
     goals: 'casual',
-    photos: [],
-    name: '',
-    occupation: '',
-    interests: []
+    name: ''
   });
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [uploadedPhotos, setUploadedPhotos] = useState([]);
 
-  // Bio analysis function
   const analyzeBioAdvanced = (bio, goals) => {
     const words = bio.split(/\s+/).filter(word => word.length > 0);
     const sentences = bio.split(/[.!?]+/).filter(s => s.trim().length > 0);
@@ -25,11 +19,7 @@ const TinderProfileOptimizer = () => {
       confident: ['confident', 'bold', 'leader', 'ambitious', 'driven'],
       funny: ['funny', 'humor', 'laugh', 'joke', 'witty'],
       adventurous: ['adventure', 'travel', 'explore', 'outdoors', 'hiking'],
-      creative: ['creative', 'art', 'music', 'write', 'design'],
-      intellectual: ['read', 'books', 'learn', 'philosophy', 'science'],
-      romantic: ['romantic', 'love', 'relationship', 'partner'],
-      active: ['fitness', 'gym', 'sports', 'running', 'yoga'],
-      social: ['friends', 'social', 'party', 'hangout', 'meet']
+      creative: ['creative', 'art', 'music', 'write', 'design']
     };
 
     const detectedTraits = {};
@@ -45,15 +35,13 @@ const TinderProfileOptimizer = () => {
     const hasEmojis = /[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]/u.test(bio);
     const hasQuestions = bio.includes('?');
     const hasCallToAction = /let's|message|chat|talk|connect|meet/i.test(bio);
-    const hasInterests = /love|enjoy|passion|hobby|into/i.test(bio);
 
     const lengthScore = words.length >= 15 && words.length <= 50 ? 100 : 
                       words.length < 15 ? (words.length / 15) * 100 : 
                       Math.max(0, 100 - ((words.length - 50) * 2));
 
     const personalityScore = Object.keys(detectedTraits).length * 15;
-    const engagementScore = (hasEmojis ? 25 : 0) + (hasQuestions ? 25 : 0) + 
-                           (hasCallToAction ? 30 : 0) + (hasInterests ? 20 : 0);
+    const engagementScore = (hasEmojis ? 25 : 0) + (hasQuestions ? 25 : 0) + (hasCallToAction ? 30 : 0);
 
     const overallScore = Math.max(0, Math.min(100, 
       lengthScore * 0.3 + personalityScore * 0.4 + engagementScore * 0.3
@@ -66,7 +54,6 @@ const TinderProfileOptimizer = () => {
       hasEmojis,
       hasQuestions,
       hasCallToAction,
-      hasInterests,
       scores: {
         overall: Math.round(overallScore),
         length: Math.round(lengthScore),
@@ -76,13 +63,11 @@ const TinderProfileOptimizer = () => {
     };
   };
 
-  const generateSuggestions = (bioAnalysis, goals) => {
+  const generateSuggestions = (bioAnalysis) => {
     const suggestions = [];
 
     if (bioAnalysis.wordCount < 15) {
       suggestions.push({
-        type: 'length',
-        priority: 'high',
         title: 'Bio too short',
         description: 'Expand your bio to 15-50 words for better engagement.',
         impact: '+15 points'
@@ -91,8 +76,6 @@ const TinderProfileOptimizer = () => {
 
     if (Object.keys(bioAnalysis.personalityTraits).length === 0) {
       suggestions.push({
-        type: 'personality',
-        priority: 'high',
         title: 'Add personality traits',
         description: 'Include words that show your personality (adventurous, creative, funny, etc.)',
         impact: '+20 points'
@@ -101,43 +84,13 @@ const TinderProfileOptimizer = () => {
 
     if (!bioAnalysis.hasEmojis) {
       suggestions.push({
-        type: 'engagement',
-        priority: 'medium',
         title: 'Add emojis',
         description: 'Include 1-2 relevant emojis to make your profile more appealing',
         impact: '+8 points'
       });
     }
 
-    if (!bioAnalysis.hasCallToAction) {
-      suggestions.push({
-        type: 'engagement',
-        priority: 'medium',
-        title: 'Add call to action',
-        description: 'End with something like "Let\'s chat!" or "Message me if..."',
-        impact: '+12 points'
-      });
-    }
-
     return suggestions;
-  };
-
-  const analyzePhotos = (photos) => {
-    const photoTips = [
-      { tip: 'Use a clear, smiling headshot as your first photo', score: 85 },
-      { tip: 'Include at least one full-body photo', score: 75 },
-      { tip: 'Show yourself in social settings', score: 70 },
-      { tip: 'Avoid group photos where you\'re hard to identify', score: 80 },
-      { tip: 'Include photos of your hobbies or interests', score: 65 },
-      { tip: 'Ensure good lighting in all photos', score: 90 }
-    ];
-
-    return {
-      tips: photoTips,
-      overallScore: photos.length > 0 ? Math.floor(Math.random() * 30) + 60 : 0,
-      photoCount: photos.length,
-      recommendedCount: 6
-    };
   };
 
   const handleAnalysis = () => {
@@ -150,13 +103,11 @@ const TinderProfileOptimizer = () => {
     
     setTimeout(() => {
       const bioAnalysis = analyzeBioAdvanced(userProfile.bio, userProfile.goals);
-      const suggestions = generateSuggestions(bioAnalysis, userProfile.goals);
-      const photoAnalysis = analyzePhotos(uploadedPhotos);
+      const suggestions = generateSuggestions(bioAnalysis);
 
       setAnalysis({
         bio: bioAnalysis,
         suggestions,
-        photos: photoAnalysis,
         timestamp: new Date().toISOString()
       });
       
@@ -175,170 +126,199 @@ const TinderProfileOptimizer = () => {
       "Family-oriented professional seeking genuine connection 💕 Love deep conversations and planning future adventures together",
       "Believer in old-school romance and building something real ❤️ Looking for my best friend and life partner",
       "Ready to delete this app with the right person 😊 Value loyalty, communication, and shared dreams"
-    ],
-    networking: [
-      "Entrepreneur passionate about innovation and meaningful connections 💼 Always interested in discussing new ideas",
-      "Creative professional looking to expand my network 🎨 Love collaborating with talented individuals",
-      "Tech enthusiast and startup founder 🚀 Seeking like-minded professionals for networking"
     ]
   };
 
   const generateRandomBio = () => {
-    const templates = bioTemplates[userProfile.goals];
+    const templates = bioTemplates[userProfile.goals] || bioTemplates.casual;
     const randomTemplate = templates[Math.floor(Math.random() * templates.length)];
     setUserProfile({ ...userProfile, bio: randomTemplate });
   };
 
-  const handlePhotoUpload = (event) => {
-    const files = Array.from(event.target.files);
-    files.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setUploadedPhotos(prev => [...prev, {
-          id: Date.now() + Math.random(),
-          url: e.target.result,
-          name: file.name,
-          score: Math.floor(Math.random() * 40) + 60
-        }]);
-      };
-      reader.readAsDataURL(file);
-    });
-  };
-
   const HomeScreen = () => (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-red-50">
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="text-center mb-12">
-          <div className="flex items-center justify-center mb-4">
-            <Heart className="w-12 h-12 text-pink-500 mr-3" />
-            <h1 className="text-4xl font-bold text-gray-800">Profile Optimizer</h1>
-          </div>
-          <p className="text-xl text-gray-600 mb-8">Get more matches with AI-powered profile optimization</p>
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%)',
+      padding: '20px'
+    }}>
+      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+          <h1 style={{ 
+            fontSize: '48px', 
+            fontWeight: 'bold', 
+            color: '#1f2937',
+            marginBottom: '10px'
+          }}>
+            ❤️ Profile Optimizer
+          </h1>
+          <p style={{ fontSize: '20px', color: '#6b7280', marginBottom: '30px' }}>
+            Get more matches with AI-powered profile optimization
+          </p>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white p-6 rounded-xl shadow-lg">
-              <BarChart3 className="w-8 h-8 text-blue-500 mx-auto mb-3" />
-              <h3 className="font-semibold text-gray-800 mb-2">Bio Analysis</h3>
-              <p className="text-gray-600 text-sm">AI analyzes your tone, personality, and engagement factors</p>
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
+            gap: '20px',
+            marginBottom: '30px'
+          }}>
+            <div style={{
+              backgroundColor: 'white',
+              padding: '20px',
+              borderRadius: '15px',
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+              textAlign: 'center'
+            }}>
+              <div style={{ fontSize: '32px', marginBottom: '10px' }}>📊</div>
+              <h3 style={{ fontWeight: '600', color: '#1f2937', marginBottom: '8px' }}>Bio Analysis</h3>
+              <p style={{ color: '#6b7280', fontSize: '14px' }}>AI analyzes your tone, personality, and engagement factors</p>
             </div>
-            <div className="bg-white p-6 rounded-xl shadow-lg">
-              <Camera className="w-8 h-8 text-green-500 mx-auto mb-3" />
-              <h3 className="font-semibold text-gray-800 mb-2">Photo Optimization</h3>
-              <p className="text-gray-600 text-sm">Get tips for better photo selection and ordering</p>
+            <div style={{
+              backgroundColor: 'white',
+              padding: '20px',
+              borderRadius: '15px',
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+              textAlign: 'center'
+            }}>
+              <div style={{ fontSize: '32px', marginBottom: '10px' }}>📸</div>
+              <h3 style={{ fontWeight: '600', color: '#1f2937', marginBottom: '8px' }}>Photo Tips</h3>
+              <p style={{ color: '#6b7280', fontSize: '14px' }}>Get tips for better photo selection and ordering</p>
             </div>
-            <div className="bg-white p-6 rounded-xl shadow-lg">
-              <Target className="w-8 h-8 text-purple-500 mx-auto mb-3" />
-              <h3 className="font-semibold text-gray-800 mb-2">Goal-Based Tips</h3>
-              <p className="text-gray-600 text-sm">Customized advice based on your dating goals</p>
+            <div style={{
+              backgroundColor: 'white',
+              padding: '20px',
+              borderRadius: '15px',
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+              textAlign: 'center'
+            }}>
+              <div style={{ fontSize: '32px', marginBottom: '10px' }}>🎯</div>
+              <h3 style={{ fontWeight: '600', color: '#1f2937', marginBottom: '8px' }}>Goal-Based Tips</h3>
+              <p style={{ color: '#6b7280', fontSize: '14px' }}>Customized advice based on your dating goals</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Enter Your Profile Information</h2>
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '20px',
+          padding: '40px',
+          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
+        }}>
+          <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#1f2937', marginBottom: '20px' }}>
+            Enter Your Profile Information
+          </h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
-              <input
-                type="text"
-                value={userProfile.name}
-                onChange={(e) => setUserProfile({...userProfile, name: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                placeholder="Your name"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Age</label>
-              <input
-                type="number"
-                value={userProfile.age}
-                onChange={(e) => setUserProfile({...userProfile, age: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                placeholder="25"
-              />
-            </div>
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
+              Name
+            </label>
+            <input
+              type="text"
+              value={userProfile.name}
+              onChange={(e) => setUserProfile({...userProfile, name: e.target.value})}
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                border: '1px solid #d1d5db',
+                borderRadius: '8px',
+                fontSize: '16px',
+                boxSizing: 'border-box'
+              }}
+              placeholder="Your name"
+            />
           </div>
 
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Dating Goal</label>
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
+              Dating Goal
+            </label>
             <select
               value={userProfile.goals}
               onChange={(e) => setUserProfile({...userProfile, goals: e.target.value})}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                border: '1px solid #d1d5db',
+                borderRadius: '8px',
+                fontSize: '16px',
+                boxSizing: 'border-box'
+              }}
             >
               <option value="casual">Casual Dating</option>
               <option value="long-term">Long-term Relationship</option>
-              <option value="networking">Professional Networking</option>
             </select>
           </div>
 
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
+              Bio
+            </label>
             <textarea
               value={userProfile.bio}
               onChange={(e) => setUserProfile({...userProfile, bio: e.target.value})}
               rows={4}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                border: '1px solid #d1d5db',
+                borderRadius: '8px',
+                fontSize: '16px',
+                resize: 'vertical',
+                boxSizing: 'border-box'
+              }}
               placeholder="Tell us about yourself..."
             />
-            <div className="flex justify-between items-center mt-2">
-              <span className="text-sm text-gray-500">{userProfile.bio.length}/500 characters</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
+              <span style={{ fontSize: '14px', color: '#6b7280' }}>
+                {userProfile.bio.length}/500 characters
+              </span>
               <button
                 onClick={generateRandomBio}
-                className="text-sm text-pink-500 hover:text-pink-600 font-medium"
+                style={{
+                  fontSize: '14px',
+                  color: '#ec4899',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: '500'
+                }}
               >
                 Generate Sample Bio
               </button>
             </div>
           </div>
 
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Photos</label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-              <input
-                type="file"
-                multiple
-                accept="image/*"
-                onChange={handlePhotoUpload}
-                className="hidden"
-                id="photo-upload"
-              />
-              <label htmlFor="photo-upload" className="cursor-pointer">
-                <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                <p className="text-gray-600">Click to upload photos or drag and drop</p>
-                <p className="text-sm text-gray-500 mt-1">PNG, JPG up to 10MB each</p>
-              </label>
-            </div>
-            
-            {uploadedPhotos.length > 0 && (
-              <div className="grid grid-cols-3 gap-4 mt-4">
-                {uploadedPhotos.map(photo => (
-                  <div key={photo.id} className="relative">
-                    <img src={photo.url} alt="Uploaded" className="w-full h-24 object-cover rounded-lg" />
-                    <div className="absolute top-1 right-1 bg-green-500 text-white text-xs px-2 py-1 rounded">
-                      {photo.score}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
           <button
             onClick={handleAnalysis}
             disabled={loading}
-            className="w-full bg-gradient-to-r from-pink-500 to-red-500 text-white py-4 px-6 rounded-lg font-semibold text-lg hover:from-pink-600 hover:to-red-600 transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{
+              width: '100%',
+              background: loading ? '#9ca3af' : 'linear-gradient(135deg, #ec4899 0%, #be185d 100%)',
+              color: 'white',
+              padding: '16px 24px',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '18px',
+              fontWeight: '600',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              transition: 'all 0.2s'
+            }}
           >
             {loading ? (
-              <div className="flex items-center justify-center">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-3"></div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{
+                  width: '24px',
+                  height: '24px',
+                  border: '2px solid #ffffff',
+                  borderTop: '2px solid transparent',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite',
+                  marginRight: '12px'
+                }}></div>
                 Analyzing Profile...
               </div>
             ) : (
-              <div className="flex items-center justify-center">
-                <Zap className="w-6 h-6 mr-2" />
-                Analyze My Profile
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                ⚡ Analyze My Profile
               </div>
             )}
           </button>
@@ -348,92 +328,277 @@ const TinderProfileOptimizer = () => {
   );
 
   const ResultsScreen = () => (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-3xl font-bold text-gray-800">Profile Analysis Results</h1>
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+      padding: '20px'
+    }}>
+      <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '20px',
+          padding: '40px',
+          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+          marginBottom: '30px'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+            <h1 style={{ fontSize: '32px', fontWeight: 'bold', color: '#1f2937' }}>
+              Profile Analysis Results
+            </h1>
             <button
               onClick={() => setCurrentScreen('home')}
-              className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+              style={{
+                padding: '8px 16px',
+                backgroundColor: '#6b7280',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer'
+              }}
             >
               ← Back to Editor
             </button>
           </div>
 
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-32 h-32 rounded-full bg-gradient-to-r from-green-400 to-blue-500 text-white mb-4">
-              <span className="text-4xl font-bold">{analysis?.bio?.scores?.overall || 0}</span>
+          <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '120px',
+              height: '120px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #10b981 0%, #3b82f6 100%)',
+              color: 'white',
+              marginBottom: '16px'
+            }}>
+              <span style={{ fontSize: '36px', fontWeight: 'bold' }}>
+                {analysis?.bio?.scores?.overall || 0}
+              </span>
             </div>
-            <h2 className="text-2xl font-semibold text-gray-800 mb-2">Overall Profile Score</h2>
-            <p className="text-gray-600">
+            <h2 style={{ fontSize: '24px', fontWeight: '600', color: '#1f2937', marginBottom: '8px' }}>
+              Overall Profile Score
+            </h2>
+            <p style={{ color: '#6b7280' }}>
               {analysis?.bio?.scores?.overall >= 80 ? 'Excellent! Your profile is highly optimized.' :
                analysis?.bio?.scores?.overall >= 60 ? 'Good! Some improvements could boost your matches.' :
                'Needs work. Follow our suggestions to improve significantly.'}
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-gradient-to-r from-blue-100 to-blue-200 p-6 rounded-xl">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-blue-800 font-semibold">Length Score</span>
-                <span className="text-2xl font-bold text-blue-800">{analysis?.bio?.scores?.length || 0}</span>
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+            gap: '20px',
+            marginBottom: '30px'
+          }}>
+            <div style={{
+              background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)',
+              padding: '20px',
+              borderRadius: '12px'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <span style={{ color: '#1e40af', fontWeight: '600' }}>Length Score</span>
+                <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#1e40af' }}>
+                  {analysis?.bio?.scores?.length || 0}
+                </span>
               </div>
-              <div className="w-full bg-blue-300 rounded-full h-2">
+              <div style={{ width: '100%', backgroundColor: '#93c5fd', borderRadius: '9999px', height: '8px' }}>
                 <div 
-                  className="bg-blue-600 h-2 rounded-full transition-all duration-500"
-                  style={{ width: `${analysis?.bio?.scores?.length || 0}%` }}
+                  style={{ 
+                    backgroundColor: '#1d4ed8', 
+                    height: '8px', 
+                    borderRadius: '9999px',
+                    width: `${analysis?.bio?.scores?.length || 0}%`,
+                    transition: 'width 0.5s ease'
+                  }}
                 ></div>
               </div>
             </div>
 
-            <div className="bg-gradient-to-r from-purple-100 to-purple-200 p-6 rounded-xl">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-purple-800 font-semibold">Personality</span>
-                <span className="text-2xl font-bold text-purple-800">{analysis?.bio?.scores?.personality || 0}</span>
+            <div style={{
+              background: 'linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%)',
+              padding: '20px',
+              borderRadius: '12px'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <span style={{ color: '#7c3aed', fontWeight: '600' }}>Personality</span>
+                <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#7c3aed' }}>
+                  {analysis?.bio?.scores?.personality || 0}
+                </span>
               </div>
-              <div className="w-full bg-purple-300 rounded-full h-2">
+              <div style={{ width: '100%', backgroundColor: '#c4b5fd', borderRadius: '9999px', height: '8px' }}>
                 <div 
-                  className="bg-purple-600 h-2 rounded-full transition-all duration-500"
-                  style={{ width: `${Math.min(100, analysis?.bio?.scores?.personality || 0)}%` }}
+                  style={{ 
+                    backgroundColor: '#8b5cf6', 
+                    height: '8px', 
+                    borderRadius: '9999px',
+                    width: `${Math.min(100, analysis?.bio?.scores?.personality || 0)}%`,
+                    transition: 'width 0.5s ease'
+                  }}
                 ></div>
               </div>
             </div>
 
-            <div className="bg-gradient-to-r from-green-100 to-green-200 p-6 rounded-xl">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-green-800 font-semibold">Engagement</span>
-                <span className="text-2xl font-bold text-green-800">{analysis?.bio?.scores?.engagement || 0}</span>
+            <div style={{
+              background: 'linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)',
+              padding: '20px',
+              borderRadius: '12px'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <span style={{ color: '#059669', fontWeight: '600' }}>Engagement</span>
+                <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#059669' }}>
+                  {analysis?.bio?.scores?.engagement || 0}
+                </span>
               </div>
-              <div className="w-full bg-green-300 rounded-full h-2">
+              <div style={{ width: '100%', backgroundColor: '#86efac', borderRadius: '9999px', height: '8px' }}>
                 <div 
-                  className="bg-green-600 h-2 rounded-full transition-all duration-500"
-                  style={{ width: `${analysis?.bio?.scores?.engagement || 0}%` }}
+                  style={{ 
+                    backgroundColor: '#10b981', 
+                    height: '8px', 
+                    borderRadius: '9999px',
+                    width: `${analysis?.bio?.scores?.engagement || 0}%`,
+                    transition: 'width 0.5s ease'
+                  }}
                 ></div>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="bg-white rounded-2xl shadow-xl p-8">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-              <BarChart3 className="w-6 h-6 mr-2 text-blue-500" />
-              Bio Analysis
-            </h2>
+        {/* Bio Analysis Details */}
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '20px',
+          padding: '30px',
+          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+          marginBottom: '30px'
+        }}>
+          <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#1f2937', marginBottom: '20px' }}>
+            📊 Bio Analysis
+          </h2>
 
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="bg-gray-50 p-4 rounded-lg text-center">
-                <div className="text-2xl font-bold text-gray-800">{analysis?.bio?.wordCount || 0}</div>
-                <div className="text-sm text-gray-600">Words</div>
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', 
+            gap: '16px',
+            marginBottom: '20px'
+          }}>
+            <div style={{ backgroundColor: '#f9fafb', padding: '16px', borderRadius: '8px', textAlign: 'center' }}>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#1f2937' }}>
+                {analysis?.bio?.wordCount || 0}
               </div>
-              <div className="bg-gray-50 p-4 rounded-lg text-center">
-                <div className="text-2xl font-bold text-gray-800">{analysis?.bio?.sentenceCount || 0}</div>
-                <div className="text-sm text-gray-600">Sentences</div>
+              <div style={{ fontSize: '14px', color: '#6b7280' }}>Words</div>
+            </div>
+            <div style={{ backgroundColor: '#f9fafb', padding: '16px', borderRadius: '8px', textAlign: 'center' }}>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#1f2937' }}>
+                {analysis?.bio?.sentenceCount || 0}
+              </div>
+              <div style={{ fontSize: '14px', color: '#6b7280' }}>Sentences</div>
+            </div>
+          </div>
+
+          {analysis?.bio?.personalityTraits && Object.keys(analysis.bio.personalityTraits).length > 0 && (
+            <div style={{ marginBottom: '20px' }}>
+              <h3 style={{ fontWeight: '600', color: '#1f2937', marginBottom: '12px' }}>
+                Detected Personality Traits
+              </h3>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {Object.keys(analysis.bio.personalityTraits).map(trait => (
+                  <span key={trait} style={{
+                    padding: '6px 12px',
+                    backgroundColor: '#dbeafe',
+                    color: '#1e40af',
+                    borderRadius: '9999px',
+                    fontSize: '14px',
+                    textTransform: 'capitalize'
+                  }}>
+                    {trait}
+                  </span>
+                ))}
               </div>
             </div>
+          )}
 
-            {analysis?.bio?.personalityTraits && Object.keys(analysis.bio.personalityTraits).length > 0 && (
-              <div className="mb-6">
-                <h3 className="font-semibold text-gray-800 mb-3">Detected Personality Traits</h3>
-                <div className="flex flex-
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <span style={{ 
+                color: analysis?.bio?.hasEmojis ? '#059669' : '#dc2626',
+                marginRight: '8px',
+                fontSize: '20px'
+              }}>
+                {analysis?.bio?.hasEmojis ? '✅' : '❌'}
+              </span>
+              <span style={{ color: analysis?.bio?.hasEmojis ? '#059669' : '#dc2626' }}>
+                {analysis?.bio?.hasEmojis ? 'Contains emojis' : 'No emojis detected'}
+              </span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <span style={{ 
+                color: analysis?.bio?.hasCallToAction ? '#059669' : '#dc2626',
+                marginRight: '8px',
+                fontSize: '20px'
+              }}>
+                {analysis?.bio?.hasCallToAction ? '✅' : '❌'}
+              </span>
+              <span style={{ color: analysis?.bio?.hasCallToAction ? '#059669' : '#dc2626' }}>
+                {analysis?.bio?.hasCallToAction ? 'Has call to action' : 'Missing call to action'}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Suggestions */}
+        {analysis?.suggestions && analysis.suggestions.length > 0 && (
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '20px',
+            padding: '30px',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+          }}>
+            <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#1f2937', marginBottom: '20px' }}>
+              💡 Improvement Suggestions
+            </h2>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {analysis.suggestions.map((suggestion, index) => (
+                <div key={index} style={{
+                  padding: '20px',
+                  borderRadius: '12px',
+                  borderLeft: '4px solid #3b82f6',
+                  backgroundColor: '#f8fafc'
+                }}>
+                  <h3 style={{ fontWeight: '600', color: '#1f2937', marginBottom: '8px' }}>
+                    {suggestion.title}
+                  </h3>
+                  <p style={{ color: '#374151', marginBottom: '8px', lineHeight: '1.5' }}>
+                    {suggestion.description}
+                  </p>
+                  <div style={{ fontSize: '14px', fontWeight: '600', color: '#2563eb' }}>
+                    {suggestion.impact}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+      
+      <style jsx>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
+    </div>
+  );
+
+  return (
+    <div>
+      {currentScreen === 'home' && <HomeScreen />}
+      {currentScreen === 'results' && analysis && <ResultsScreen />}
+    </div>
+  );
+};
+
+export default TinderProfileOptimizer;
